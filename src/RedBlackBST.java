@@ -5,15 +5,17 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
     private static final boolean RED = true;
     private static final boolean BLACK = false;
 
-    private Node root;     // root of the BST
+    private Node<Key, Value> root;     // root of the BST
 
-  
+
     /**
      * Initializes an empty symbol table.
      */
     public RedBlackBST() {
     }
-
+    public RedBlackBST(Node n) {
+        root = n;
+    }
     /***************************************************************************
      *  Node helper methods.
      ***************************************************************************/
@@ -69,10 +71,10 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
     // value associated with the given key in subtree rooted at x; null if no such key
     private Value get(Node x, Key key) {
         while (x != null) {
-            int cmp = key.compareTo(x.key);
+            int cmp = key.compareTo((Key) x.getKey());
             if (cmp < 0) x = x.left;
             else if (cmp > 0) x = x.right;
-            else return x.val;
+            else return (Value) x.getValue();
         }
         return null;
     }
@@ -145,7 +147,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
 
     // delete the key-value pair with the minimum key rooted at h
     private Node deleteMin(Node h) {
-       /**deleteMin**/
+        /**deleteMin**/
         return balance(h);
     }
 
@@ -197,9 +199,9 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
     // delete the key-value pair with the given key rooted at h
     private Node delete(Node h, Key key) {
         // assert get(h, key) != null;
-       
+
         /**delete**/
-        
+
         return balance(h);
     }
 
@@ -209,16 +211,22 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
 
     // make a left-leaning link lean to the right
     private Node rotateRight(Node h) {
-        // assert (h != null) && isRed(h.left);
-        /**ROTATE RIGHT**/
+        // assert (h != null);
+        Node x = h.getLeft();
+        Node orphan = x.getRight();
+        root = x;
+        h.setLeft(orphan);
+
         return x;
     }
 
     // make a right-leaning link lean to the left
     private Node rotateLeft(Node h) {
-        // assert (h != null) && isRed(h.right);
-        /**ROTATE LEFT**/
-        
+        Node x = h.getRight();
+        Node orphan = x.getLeft();
+        root = x;
+        h.setRight(orphan);
+
         return x;
     }
 
@@ -228,7 +236,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
         // assert (h != null) && (h.left != null) && (h.right != null);
         // assert (!isRed(h) &&  isRed(h.left) &&  isRed(h.right))
         //    || (isRed(h)  && !isRed(h.left) && !isRed(h.right));
-        
+
         //HINT: NOT RECURSIVE
     }
 
@@ -247,7 +255,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
     private Node moveRedRight(Node h) {
         // assert (h != null);
         // assert isRed(h) && !isRed(h.right) && !isRed(h.right.left);
-        
+
         return h;
     }
 
@@ -278,13 +286,57 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
         if (x == null) return -1;
         return 1 + Math.max(height(x.left), height(x.right));
     }
-    public boolean isRBT(){
+
+    public boolean iBST(Node n){
+        if(n == null || n.getLeft()== null && n.getRight() == null){
+            return true;
+        }
+        else if(iBST(n.getLeft()) && iBST(n.getRight())&&
+                n.getKey().compareTo(n.getRight())>0 && n.getKey().compareTo(n.getLeft())<0){
+            return true;
+        }
+
+        return false;
+
+
+
+    }
+
+    public boolean isRBT() {
         return isRBT(root);
     }
-    
-    public boolean isRBT(){
-        /**YOUR CODE HERE**/
-        return false;
+
+    public boolean isRBT(Node n) {
+
+        if (n == null) {
+            return true;
+        }
+        if ((n != root || n.isRed == false)&& n.getRight() == null && n.getLeft() == null) {
+            return true;
+        }
+        if(root.isRed){
+            return false;
+        }
+
+        if ((n.getLeft() == null && n.getRight().isRed && n.getRight().size == 1)  || (n.getRight() == null && n.getLeft().isRed && n.getLeft().size==1) ) {
+            return true;
+        }
+        if ((n.getLeft() == null && n.getRight().isRed == false)  || (n.getRight() == null && n.getLeft().isRed == false) ) {
+            return false;
+        } //one of the babies is null so the other needs to be red
+
+
+        if (n.isRed && (n.getLeft().isRed || n.getRight().isRed)) {
+                return false;
+            }
+        if (n.getRight().size != n.getLeft().size) {
+            return false;
+        }
+        if (n.getKey().compareTo(n.getRight().getKey())<0 && n.getKey().compareTo(n.getLeft().getKey())>0){
+            return false;
+        }
+
+        return isRBT(n.getRight()) && isRBT(n.getLeft());
     }
 
     /***************************************************************************
@@ -299,7 +351,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
      */
     public Key min() {
         if (isEmpty()) throw new NoSuchElementException("calls min() with empty symbol table");
-        return min(root).key;
+        return (Key) min(root).getKey();
     }
 
     // the smallest key in subtree rooted at x; null if no such key
@@ -317,7 +369,7 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
      */
     public Key max() {
         if (isEmpty()) throw new NoSuchElementException("calls max() with empty symbol table");
-        return max(root).key;
+        return (Key) max(root).getKey();
     }
 
     // the largest key in the subtree rooted at x; null if no such key
@@ -327,6 +379,28 @@ public class RedBlackBST<Key extends Comparable<Key>, Value> {
         else return max(x.right);
     }
 
+    public boolean gParent(Node n) {
+        if ((n.getRight() != null && n.getLeft() != null)) {
+            if (n.getRight().getRight() != null || n.getRight().getLeft() != null) {
+                return true;
+            }
+            if (n.getLeft().getRight() != null || n.getLeft().getLeft() != null) {
+                return true;
+            }
+        } else if (n.getRight() != null && n.getLeft() == null) {
+            if (n.getRight().getRight() != null || n.getRight().getLeft() != null) {
+                return true;
+            }
+        } else if (n.getRight() == null && n.getLeft() != null) {
+            if (n.getLeft().getRight() != null || n.getLeft().getLeft() != null) {
+                return true;
+            }
+        }
+
+        return false;
+
+
+    }
 
 }
 
